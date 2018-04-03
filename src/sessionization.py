@@ -21,10 +21,22 @@ session is updated though, so this may complicate things).***
 import csv
 import time
 from pathlib import Path
+import argparse
+import os
+
+# Get terminal arguments (only to turn on printed progress updates)
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", "--verbose", help="Turns on verbose output", action="store_true")
+parser.add_argument("input", help="Name of the input file", default="log.csv")
+parser.add_argument("output", help="Name of the output file", default="sessionization.txt")
+args = parser.parse_args()
+
+# Set working directory to this file's directory
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 # Define input CSV and inactivity_period paths
-INPUT_PATH = Path("../input/log.csv")
-OUTPUT_PATH = Path("../output/sessionization.txt")
+INPUT_PATH = Path("../input/") / args.input
+OUTPUT_PATH = Path("../output/") / args.output
 INACTIVITY_PATH = Path("../input/inactivity_period.txt")
 
 # Define Session class
@@ -83,8 +95,9 @@ with open(INPUT_PATH, "r") as fo:
     i = 1
     previous_time = 0
     for row in reader:
-        print("Row {}".format(i))
-        i += 1
+        if args.verbose:
+            print("Row {}".format(i))
+            i += 1
         # The entries of each row are: ip, date, time, zone, cik, accession, extention, code, size, idx, norefer,
         # noagent, find, crawler, and browser
         # Read the line, extract the IP address and current time

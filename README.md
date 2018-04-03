@@ -30,5 +30,34 @@ After looking at some real-world data from the SEC's website, I've noticed a cou
 * The rate of document requests is fairly high (between 10-20/sec)
 * The active session time is positively correlated with number of documents requested
 
+### Performance
+After looking at the SEC data, it seems apparent that most users only make a single request, so that the number of
+active sessions is never very high - assuming new sessions are started at the rate inactive ones end, there are typically
+only tens of active sessions at once, meaning searching through a data structure is not so performance-critical.
+I considered using a min heap as a priority queue at first so that finding inactive sessions would be O(1) time, but
+then adding/updating sessions to the heap would be O(log k) (where k is the number of active sessions).
+Using a dictionary instead has O(1) add/update complexity, but O(k) to find inactive sessions.
+Since we only look for inactive sessions once per second, but add/update sessions for every data entry (roughly k times
+per second), the heap has total time complexity of O(k*log k), whereas the dictionary method has O(k), so it scales
+a bit better (though for only 10-20 requests per second the speedup is likely negligible).
+
+The speed of the script is pretty quick; this can get through roughly one hour's worth of logs (from the SEC) in
+a couple seconds, so it should have no trouble streaming data in real-time.
+
 ### Downloading/running the program
-Clone the repository with `git clone https://github.com/ecotner/edgar-analytics`, then run the script with ...
+Clone the repository with `git clone https://github.com/ecotner/edgar-analytics`, `cd` into the directory, then run 
+the script with `./run.sh` or `python3.6 ./src/sessionization.py` with the optional `-v` flag to turn on printing of
+progress updates.
+If you want to use your own log file, just replace the one at `input/log.csv`, and you can update the value in
+`inactivity_period.txt` to change the number of seconds elapsed before considering a session inactive.
+Make sure you have Python 3.6 installed; all modules used should be in the standard library.
+
+To run the program on some real SEC data, download and extract some of the data from the SEC website, from the root
+of the repository run:
+```bash
+cd input
+wget http://www.sec.gov/dera/data/Public-EDGAR-log-file-data/2017/Qtr2/log20170630.zip
+unzip log20170630.zip
+mv log20170630.csv log.csv
+```
+Then execute the `run.sh` script. **Be warned, the files from the SEC are typically multiple GB.**
